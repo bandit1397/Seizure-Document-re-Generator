@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>압수서류 정정 생성기</title>
+<style>
+:root{--bg:#eef0f3;--panel:#fff;--ink:#111;--muted:#5b6370;--line:#cfd4da;--accent:#1f4e8c;--warn:#a33}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--accent);color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header h1{font-size:17px;margin:0;flex:1}
+header button{background:#fff;color:var(--accent);border:0;border-radius:4px;padding:7px 14px;font:inherit;font-weight:bold;cursor:pointer}
+.wrap{display:grid;grid-template-columns:440px 1fr;gap:16px;padding:16px}
+@media(max-width:1100px){.wrap{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;align-self:start}
+.panel h2{font-size:14px;margin:16px 0 6px;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:4px}
+.panel h2:first-child{margin-top:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px}
+label{display:block;font-size:12px;color:var(--muted)}
+input,select{width:100%;padding:5px 6px;border:1px solid #bbb;border-radius:4px;font:inherit;font-size:13px;margin-top:2px}
+.chk{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink);margin:4px 0}
+.chk input{width:auto;margin:0}
+table.items{width:100%;border-collapse:collapse;font-size:12px}
+table.items th{font-weight:normal;color:var(--muted);text-align:left;padding:2px}
+table.items td{padding:2px}
+table.items input{padding:4px;font-size:12px;margin:0}
+.small{font-size:12px;padding:4px 8px;border:1px solid #bbb;background:#f7f7f7;border-radius:4px;cursor:pointer}
+.hint{font-size:12px;color:var(--muted);margin:4px 0 0;line-height:1.5}
+#out .page{background:#fff;width:210mm;max-width:100%;min-height:297mm;padding:18mm 17mm;margin:0 auto 16px;box-shadow:0 1px 4px rgba(0,0,0,.18);font-size:11pt;line-height:1.75;font-family:"Batang","바탕","Malgun Gothic",serif}
+#out h3{text-align:center;font-size:19pt;letter-spacing:.35em;margin:0 0 2mm}
+#out .subt{text-align:center;margin:0 0 6mm}
+#out table{width:100%;border-collapse:collapse;margin:3mm 0}
+#out th,#out td{border:1px solid #000;padding:1.5mm 2mm;font-size:10pt;vertical-align:middle}
+#out th{background:#eee;font-weight:bold;text-align:center}
+#out .meta td{border:0;padding:0 2mm 0 0}
+#out .r{text-align:right}
+#out .c{text-align:center}
+#out .sign{margin-top:10mm;text-align:right;line-height:2.2}
+#out p{margin:1mm 0}
+#out .in1{padding-left:5mm}#out .in2{padding-left:10mm}#out .in3{padding-left:15mm}
+#out .photo{border:1px dashed #777;height:62mm;display:flex;align-items:center;justify-content:center;color:#888}
+#out .box{border-top:1px dashed #000;margin-top:8mm;padding-top:3mm}
+#out .guide{background:#fff4f4;border:1px solid #e6b8b8;color:var(--warn);font-family:"Malgun Gothic",sans-serif;font-size:9pt;padding:2mm 3mm;margin:2mm 0;border-radius:3px}
+@media print{
+  @page{size:A4;margin:16mm 15mm}
+  body{background:#fff}
+  header,.panel,.guide{display:none!important}
+  .wrap{display:block;padding:0}
+  #out .page{box-shadow:none;margin:0;padding:0;width:auto;min-height:0;page-break-after:always}
+  #out .page:last-child{page-break-after:auto}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>압수물 품명 오기 정정 서류 생성기</h1>
+  <button id="btnPrint" type="button">인쇄 / PDF 저장</button>
+</header>
+<div class="wrap">
+  <form class="panel" id="form" autocomplete="off">
+    <h2>사건 정보</h2>
+    <div class="grid2">
+      <label>경찰 사건번호<input name="caseNo"></label>
+      <label>검찰 사건번호<input name="proCaseNo"></label>
+      <label>죄명<input name="crime"></label>
+      <label>피의자<input name="suspect"></label>
+      <label>피의자 생년월일<input name="suspectBirth"></label>
+      <label>피의자 주거<input name="suspectAddr"></label>
+      <label>범행 일시<input name="crimeTime"></label>
+      <label>체포·압수 일시<input name="seizeTime"></label>
+    </div>
+    <label>범행 장소(피해업체 주소)<input name="crimePlace"></label>
+    <label>체포·압수 장소<input name="seizePlace"></label>
+    <div class="grid2">
+      <label>임의제출자<input name="submitter"></label>
+      <label>제출자 지위<input name="submitterRel" placeholder="피의자 본인"></label>
+      <label>압수물 전체(종·점)<input name="total"></label>
+      <label>피해액 합계<input name="amount"></label>
+    </div>
+
+    <h2>피해업체 · 압수물 처리</h2>
+    <div class="grid2">
+      <label>피해업체<input name="store"></label>
+      <label>담당자(직위 성명)<input name="manager"></label>
+    </div>
+    <label>압수물 상태
+      <select name="status">
+        <option value="returned">피해업체에 가환부</option>
+        <option value="held">경찰서 보관 중</option>
+      </select>
+    </label>
+    <div class="grid2">
+      <label>가환부일<input name="returnDate"></label>
+      <label>보관 장소<input name="storage"></label>
+    </div>
+
+    <h2>송치 · 보완요구</h2>
+    <div class="grid2">
+      <label>송치일<input name="sendDate"></label>
+      <label>보완요구일<input name="requestDate"></label>
+      <label>검찰청<input name="proOffice"></label>
+      <label>담당 검사<input name="prosecutor"></label>
+    </div>
+    <label>요구 형식
+      <select name="reqType">
+        <option value="supp">보완수사요구 (보완수사 결과 통보서)</option>
+        <option value="add">기록 보완 요청 (추송서)</option>
+      </select>
+    </label>
+
+    <h2>작성자</h2>
+    <div class="grid2">
+      <label>경찰서<input name="station"></label>
+      <label>부서<input name="dept"></label>
+      <label>계급 성명<input name="officer"></label>
+      <label>작성일<input name="writeDate"></label>
+    </div>
+
+    <h2>품명 오기 물품</h2>
+    <table class="items">
+      <thead><tr><th style="width:9%">연번</th><th>정정 전</th><th>정정 후</th><th style="width:11%">수량</th><th style="width:17%">상품코드</th><th style="width:13%">단가</th><th></th></tr></thead>
+      <tbody id="items"></tbody>
+    </table>
+    <button type="button" class="small" id="addItem">+ 물품 추가</button>
+    <p class="hint">정정 후 품명의 단가 합계가 바뀌면 아래에서 '피해액 변동'을 선택하세요.</p>
+    <label>피해액
+      <select name="damage">
+        <option value="same">변동 없음</option>
+        <option value="changed">변동 있음</option>
+      </select>
+    </label>
+    <label>정정 후 피해액 합계(변동 시)<input name="amountAfter"></label>
+    <label>같은 오기가 있는 서류(쉼표로 구분)<input name="affectedDocs"></label>
+
+    <h2>실제로 마친 조치 (마친 것만 체크)</h2>
+    <p class="hint">체크하지 않은 항목은 수사보고에 '~할 예정'으로 적힙니다. 하지 않은 일을 완료형으로 쓰지 않도록 합니다.</p>
+    <label class="chk"><input type="checkbox" name="doneVictim"> 피해업체 확인 완료</label>
+    <label>피해업체 확인일<input name="victimDate"></label>
+    <label class="chk"><input type="checkbox" name="doneOpen"> (보관 중) 현품 개봉 확인 완료</label>
+    <div class="grid2">
+      <label>개봉 일시<input name="openTime"></label>
+      <label>참여인<input name="witness"></label>
+    </div>
+    <label class="chk"><input type="checkbox" name="doneReissue"> 정정 압수목록 교부 완료</label>
+    <label>교부일<input name="reissueDate"></label>
+    <label class="chk"><input type="checkbox" name="doneSubmitter"> 임의제출자 확인서 받음</label>
+
+    <h2>출력할 서류</h2>
+    <div id="docChecks"></div>
+    <p class="hint">오른쪽 미리보기는 직접 클릭해 고칠 수 있습니다. 단, 왼쪽 입력을 바꾸면 다시 생성되어 직접 고친 내용은 사라집니다. 입력값은 이 브라우저에만 저장됩니다.</p>
+    <button type="button" class="small" id="reset">예시값으로 초기화</button>
+  </form>
+  <div id="out" contenteditable="true" spellcheck="false"></div>
+</div>
+
+<script>
+const DEFAULTS={
+  caseNo:'2026-000123',proCaseNo:'2026형제○○○○○호',crime:'절도',suspect:'김○○',suspectBirth:'19○○. ○. ○.',suspectAddr:'○○시 ○○구 ○○로 ○○',
+  crimeTime:'2026. 7. 3. 15:10경',seizeTime:'2026. 7. 3. 15:20경',
+  crimePlace:'서울 ○○구 ○○로 ○○ 소재 다이소 ○○점',seizePlace:'서울 ○○구 ○○로 ○○ 다이소 ○○점 출입구 앞',
+  submitter:'김○○',submitterRel:'피의자 본인',total:'8종 10점',amount:'18,000원',
+  store:'다이소 ○○점',manager:'점장 이○○',status:'returned',returnDate:'2026. 7. 3.',storage:'당서 압수물 보관창고',
+  sendDate:'2026. 7. 20.',requestDate:'2026. 10. 13.',proOffice:'○○지방검찰청',prosecutor:'검사 ○○○',reqType:'supp',
+  station:'○○경찰서',dept:'형사과 강력○팀',officer:'경위 홍길동',writeDate:'2026. 10. 16.',
+  damage:'same',amountAfter:'',affectedDocs:'압수조서(압수경위란), 압수목록, 압수목록 교부서, 임의제출서, 압수물 가환부 영수증, 압수물 총목록, 피의자신문조서',
+  doneVictim:true,victimDate:'2026. 10. 15.',doneOpen:false,openTime:'2026. 10. ○○. ○○:○○',witness:'○○○',
+  doneReissue:true,reissueDate:'2026. 10. 16.',doneSubmitter:true,
+  items:[
+    {no:'2',before:'장갑',after:'쿨 팔토시(2개입)',qty:'1개',code:'품번 ○○○○○○',price:'2,000원'},
+    {no:'4',before:'USB 충전케이블',after:'C타입 이어폰 변환젠더',qty:'1개',code:'품번 ○○○○○○',price:'3,000원'},
+    {no:'6',before:'양말',after:'발목 보호대',qty:'1개',code:'품번 ○○○○○○',price:'3,000원'}
+  ],
+  docs:{report:true,table:true,reissue:true,submitter:true,victim:true,photo:true,send:true}
+};
+const DOCS=[['report','수사보고'],['table','정정 전·후 대조표'],['reissue','압수목록 교부서(품명 정정)'],['submitter','임의제출자 확인서'],['victim','피해품 확인서'],['photo','사진대지'],['send','보완수사 결과 통보서 / 추송서']];
+const KEY='seizure-regen-v1';
+const form=document.getElementById('form'),itemsEl=document.getElementById('items'),out=document.getElementById('out');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+document.getElementById('docChecks').innerHTML=DOCS.map(([k,t])=>`<label class="chk"><input type="checkbox" data-doc="${k}"> ${t}</label>`).join('');
+
+function addRow(it={}){
+  const tr=document.createElement('tr');
+  tr.innerHTML=['no','before','after','qty','code','price'].map(k=>`<td><input data-k="${k}" value="${esc(it[k]||'')}"></td>`).join('')+'<td><button type="button" class="small" title="삭제">×</button></td>';
+  tr.querySelector('button').onclick=()=>{tr.remove();update()};
+  itemsEl.appendChild(tr);
+}
+function load(d){
+  for(const el of form.elements){
+    if(!el.name)continue;
+    if(el.type==='checkbox')el.checked=!!d[el.name];else el.value=d[el.name]??'';
+  }
+  itemsEl.innerHTML='';(d.items||[]).forEach(addRow);
+  form.querySelectorAll('[data-doc]').forEach(c=>c.checked=!!(d.docs||{})[c.dataset.doc]);
+}
+function read(){
+  const v={};
+  for(const el of form.elements){if(el.name)v[el.name]=el.type==='checkbox'?el.checked:el.value.trim()}
+  v.items=[...itemsEl.rows].map(tr=>{const o={};tr.querySelectorAll('input').forEach(i=>o[i.dataset.k]=i.value.trim());return o}).filter(i=>i.before||i.after);
+  v.docs={};form.querySelectorAll('[data-doc]').forEach(c=>v.docs[c.dataset.doc]=c.checked);
+  return v;
+}
+
+const page=(title,sub,body)=>`<section class="page"><h3>${title}</h3>${sub?`<p class="subt">${sub}</p>`:'<p class="subt"></p>'}${body}</section>`;
+const nos=v=>v.items.map(i=>i.no).join(', ');
+const lines=(v,pre='')=>v.items.map(i=>`<p class="${pre}">- 연번 ${esc(i.no)} : ${esc(i.before)} → ${esc(i.after)} ${esc(i.qty)}</p>`).join('');
+const sign=v=>`<div class="sign">${esc(v.station)} ${esc(v.dept)}<br>사법경찰관 ${esc(v.officer)} (인)</div>`;
+const metaTbl=(rows)=>`<table class="meta">${rows.map(r=>`<tr>${r.map(([k,x])=>`<td><b>${k}</b> : ${esc(x)}</td>`).join('')}</tr>`).join('')}</table>`;
+
+function docReport(v){
+  const held=v.status==='held',n=v.items.length;
+  const s=[];
+  s.push(`<p class="r">${esc(v.writeDate)}</p>`);
+  s.push(metaTbl([[['수 신',v.station+'장']],[['참 조',v.dept.split(' ')[0]+'장']],[['제 목','압수물 품명 오기 확인 및 정정 보고'+(v.reqType==='supp'?'(보완수사요구 이행)':'')]]]));
+  s.push(`<p>&nbsp; 피의자 ${esc(v.suspect)}에 대한 ${esc(v.crime)} 사건(${esc(v.caseNo)})에 관하여, ${esc(v.proOffice)} ${esc(v.prosecutor)}의 ${esc(v.requestDate)}자 ${v.reqType==='supp'?'보완수사요구':'보완 요청'}(압수물 품명 불일치)에 따라 다음과 같이 확인하였기에 보고합니다.</p>`);
+  s.push(`<p><b>1. 압수 및 송치 경위</b></p>
+  <p class="in1">가. 피의자는 ${esc(v.crimeTime)} ${esc(v.crimePlace)}에서 진열된 물품 ${esc(v.total)}(시가 합계 ${esc(v.amount)} 상당)을 절취하였다는 혐의로 ${esc(v.seizeTime)} ${esc(v.seizePlace)}에서 현행범인으로 체포되었음.</p>
+  <p class="in1">나. 체포 현장에서 ${esc(v.submitterRel)}인 ${esc(v.submitter)}로부터 위 물품 ${esc(v.total)}을 임의제출받아 압수하고(형사소송법 제218조), 압수조서 및 압수목록을 작성하였으며, 임의제출자에게 압수목록을 교부하였음.</p>
+  <p class="in1">다. ${held?`압수물은 ${esc(v.storage)}에 보관 중임.`:`압수물은 피해품으로서 ${esc(v.returnDate)} 피해업체 ${esc(v.store)} ${esc(v.manager)}에게 가환부하였음.`}</p>
+  <p class="in1">라. ${esc(v.sendDate)} 위 사건을 송치하였음.</p>`);
+  s.push(`<p><b>2. ${v.reqType==='supp'?'보완수사요구':'보완 요청'} 내용</b></p><p class="in1">압수목록상 압수물의 수량(${esc(v.total)})은 일치하나, 일부 압수물의 품명이 실제 물품과 일치하지 않으므로 이를 확인하여 보완할 것.</p>`);
+  s.push(`<p><b>3. 확인 결과</b></p>
+  <p class="in1">가. 오기 원인</p>
+  <p class="in2">압수 당시 압수물은 모두 판매용 포장이 개봉되지 않은 상태였으며, 피해품의 상품가치를 보전하기 위하여 포장을 개봉하지 않고 포장의 그림과 형태만 보고 품명을 기재하였음. 이 과정에서 ${n}건의 내용물을 잘못 판단하여 품명을 다르게 기재하였음.</p>
+  <p class="in1">나. 오기 물품</p>
+  <table><tr><th>연번</th><th>기재 품명(정정 전)</th><th>실제 품명(정정 후)</th><th>수량</th><th>상품코드</th></tr>
+  ${v.items.map(i=>`<tr><td class="c">${esc(i.no)}</td><td>${esc(i.before)}</td><td>${esc(i.after)}</td><td class="c">${esc(i.qty)}</td><td>${esc(i.code)}</td></tr>`).join('')}</table>
+  <p class="in1">다. 동일성 확인 방법</p>
+  <p class="in2">(1) 압수 당시 촬영한 사진과 대조한 결과, 위 ${n}건의 포장 외관, 색상, 수량이 압수목록 해당 연번의 물품과 같음.</p>
+  <p class="in2">(2) 압수 당시 사진에 찍힌 포장의 상품명 및 상품코드를 판독한 결과, 위 '실제 품명'란의 상품으로 확인됨.</p>
+  ${held
+    ?(v.doneOpen
+      ?`<p class="in2">(3) ${esc(v.openTime)} ${esc(v.storage)}에서 참여인 ${esc(v.witness)}이 입회한 가운데 위 ${n}건의 포장을 개봉하여 내용물을 확인하고 촬영하였음(사진대지 첨부).</p>`
+      :`<p class="in2">(3) ${esc(v.storage)}에 보관 중인 현품을 참여인 입회하에 개봉하여 내용물을 확인할 예정임.</p>`)
+    :(v.doneVictim
+      ?`<p class="in2">(3) ${esc(v.victimDate)} 피해업체 ${esc(v.manager)}에게 위 상품코드를 조회받은 결과, 각 상품이 위 '실제 품명'란의 상품이고 ${esc(v.returnDate)} 도난 및 가환부 처리된 품목과 같음을 확인하였음(피해품 확인서 첨부).</p>`
+      :`<p class="in2">(3) 피해업체 ${esc(v.manager)}에게 상품코드 조회 및 확인을 받을 예정임.</p>`)}
+  <p class="in1">라. 동일성 판단</p>
+  <p class="in2">압수 일시와 장소, 수량, 포장 외관, 상품코드가 모두 일치하므로, 이번 정정은 같은 물품의 품명 기재 오류를 바로잡는 것일 뿐이며 압수 대상이나 수량에는 변동이 없음.</p>
+  <p class="in1">마. 피해액 영향</p>
+  <p class="in2">${v.damage==='same'?`정정 전후 각 물품의 판매가가 같아 피해액 합계(${esc(v.amount)})는 변동 없음.`:`정정 후 피해액 합계는 ${esc(v.amountAfter||'○○,○○○원')}이므로, 범죄사실의 피해액을 "시가 합계 ${esc(v.amountAfter||'○○,○○○원')} 상당"으로 정정함.`}</p>
+  <p class="in1">바. 같은 품명이 기재된 서류</p>
+  <p class="in2">${esc(v.affectedDocs)}에 같은 오기가 있으며, 별첨 대조표와 같이 정리하였음.</p>`);
+  s.push(`<p><b>4. 조치 사항</b></p>
+  <p class="in1">가. 송치한 압수 관련 서류의 원본은 수정하거나 다시 작성하지 않고 그대로 두며, 본 수사보고와 별첨 대조표로 정정 내용을 명확히 함.</p>
+  <p class="in1">나. ${v.doneReissue?`${esc(v.reissueDate)} 임의제출자 ${esc(v.submitter)}에게 품명을 정정한 압수목록을 교부하고 수령 확인을 받았음.`:`임의제출자 ${esc(v.submitter)}에게 품명을 정정한 압수목록을 교부할 예정임.`}</p>
+  ${v.doneSubmitter?`<p class="in1">다. 임의제출자는 정정된 물품이 당시 제출한 물품과 같고 정정된 품명에 이의가 없다고 확인하여 임의제출자 확인서를 받았음.</p>`:''}
+  <p class="in1">${v.doneSubmitter?'라':'다'}. 피의자가 작성한 소유권포기서는 피해품에 관한 것이어서 그 포기 의사표시로 효력이 생기지 않으므로 다시 받지 않음.</p>`);
+  const att=[['table','압수물 품명 정정 전·후 대조표'],['photo','사진대지'],['victim','피해품 확인서('+v.store+')'],['reissue','압수목록 교부서(품명 정정) 사본'],['submitter','임의제출자 확인서']].filter(([k])=>v.docs[k]).map(([,t],i)=>`<p class="in2">${i+1}. ${esc(t)} 1부.</p>`);
+  if(att.length)s.push(`<p><b>첨 부</b></p>${att.join('')}<p class="r">끝.</p>`);
+  s.push(sign(v));
+  s.push(`<div class="guide">출력되지 않는 안내: 체크하지 않은 조치는 '예정'으로 적힙니다. 실제로 마친 뒤 왼쪽에서 체크하고 날짜를 넣으세요.</div>`);
+  return page('수 사 보 고','',s.join(''));
+}
+
+function docTable(v){
+  return page('압수물 품명 정정 전·후 대조표','',
+    metaTbl([[['사건번호',v.caseNo],['죄명',v.crime],['피의자',v.suspect]],[['최초 압수일시',v.seizeTime],['작성일',v.writeDate]]])+
+    `<table><tr><th>연번</th><th>정정 전</th><th>정정 후</th><th>수량</th><th>상품코드</th><th>단가</th></tr>
+    ${v.items.map(i=>`<tr><td class="c">${esc(i.no)}</td><td>${esc(i.before)}</td><td>${esc(i.after)}</td><td class="c">${esc(i.qty)}</td><td>${esc(i.code)}</td><td class="r">${esc(i.price)}</td></tr>`).join('')}</table>
+    <p><b>같은 오기가 있는 서류</b> : ${esc(v.affectedDocs)}</p>
+    <p>1. 정정 사유 : 미개봉 상품을 포장 외관만 보고 품명을 기재하여 생긴 오기</p>
+    <p>2. 확인 근거 : 압수 당시 사진, 포장 상품코드 판독, ${v.status==='held'?'현품 개봉 확인':'피해업체 확인'}</p>
+    <p>3. 정정 범위 : 총 ${esc(v.total)} 중 연번 ${esc(nos(v))}의 품명에 한정함. 수량, 압수일시, 압수장소, 그 밖의 물품은 변경하지 않음.</p>
+    <p>4. 비 고 : 본 대조표는 송치된 원본 서류를 대체하지 않음.</p>
+    <div class="sign">작성자 사법경찰관 ${esc(v.officer)} (인)</div>
+    <div class="guide">출력되지 않는 안내: 실제 기록을 보고 오기가 없는 서류는 '같은 오기가 있는 서류' 칸에서 빼세요.</div>`);
+}
+
+function docReissue(v){
+  return page('압수목록 교부서','(품명 정정)',
+    metaTbl([[['사건번호',v.caseNo],['죄명',v.crime]],[['피압수자(임의제출자)',v.submitter]],[['최초 압수일시',v.seizeTime]],[['최초 압수장소',v.seizePlace]]])+
+    `<p>&nbsp; 귀하가 ${esc(v.seizeTime.replace(/\s*\d{1,2}:\d{2}.*$/,''))} 임의제출하여 압수한 물건 ${esc(v.total)} 중 아래 ${v.items.length}건의 품명이 실제 물품과 다르게 기재되어 있었으므로, 이를 정정한 압수목록을 교부합니다.</p>
+    <table><tr><th>연번</th><th>정정 전 품명</th><th>정정 후 품명</th><th>수량</th><th>비고</th></tr>
+    ${v.items.map((i,k)=>`<tr><td class="c">${esc(i.no)}</td><td>${esc(i.before)}</td><td>${esc(i.after)}</td><td class="c">${esc(i.qty)}</td><td>${k?'위와 같음':'포장 미개봉 상태로 외관만 보고 오기'}</td></tr>`).join('')}</table>
+    <p>※ 위 물품 외 나머지 압수물의 품명과 수량은 최초 교부한 압수목록과 같습니다.</p>
+    <p>※ 이번 정정은 품명 기재를 바로잡는 것이며, 압수물을 추가하거나 바꾸는 것이 아닙니다.</p>
+    <p>※ 최초 교부한 압수목록 교부서는 그대로 유효하며, 본 서류는 이를 보충합니다.</p>
+    <p class="c" style="margin-top:6mm">${esc(v.doneReissue?v.reissueDate:v.writeDate)}</p>
+    <div class="sign">${esc(v.station)} 사법경찰관 ${esc(v.officer)} (인)</div>
+    <div class="box"><p class="c"><b>수 령 확 인</b></p>
+    <p>본인은 위 품명 정정 압수목록을 교부받았습니다.</p>
+    <p>교부일시 : ${esc(v.doneReissue?v.reissueDate:'20  .   .   .')} &nbsp;&nbsp; :   &nbsp;&nbsp;&nbsp; 교부장소 : ${esc(v.station)}</p>
+    <p class="r">수령인 : ${esc(v.submitter)} (서명 또는 무인)</p></div>
+    <div class="guide">출력되지 않는 안내: 2부를 출력해 1부는 교부하고, 서명받은 1부(또는 사본)를 기록에 첨부하세요. 우편으로 교부했다면 수령확인란 대신 발송일과 등기번호를 적으세요.</div>`);
+}
+
+function docSubmitter(v){
+  return page('임의제출자 확인서','',
+    metaTbl([[['성 명',`${v.submitter} (${v.suspectBirth}생)`]],[['주 거',v.suspectAddr]]])+
+    `<p style="margin-top:4mm">&nbsp; 본인은 ${esc(v.seizeTime)} ${esc(v.seizePlace)}에서 물건 ${esc(v.total)}을 경찰관에게 임의제출하였습니다.</p>
+    <p>&nbsp; 오늘 경찰관으로부터, 당시 작성된 압수목록 중 아래 물건의 품명이 실제와 다르게 적혀 있었다는 설명을 들었습니다.</p>
+    ${lines(v,'in1')}
+    <p>&nbsp; 위 물건은 당시 제가 제출한 물건과 같은 물건이며, 포장을 뜯지 않은 상태여서 안에 무엇이 들었는지 정확히 알지 못했습니다. 정정된 품명에 이의가 없습니다.</p>
+    <p class="c" style="margin-top:8mm">20&nbsp;&nbsp;&nbsp;.&nbsp;&nbsp;&nbsp;.&nbsp;&nbsp;&nbsp;.</p>
+    <div class="sign">확 인 자 : ${esc(v.submitter)} (서명 또는 무인)<br>확인 경찰관 : ${esc(v.station)} ${esc(v.officer)} (인)</div>
+    <div class="guide">출력되지 않는 안내: 본인이 동의하지 않으면 억지로 받지 마세요. 그때는 수사보고에 사실대로 적고, 사진·상품코드·피해업체 확인으로 동일성을 소명합니다.</div>`);
+}
+
+function docVictim(v){
+  return page('피해품 확인서','',
+    metaTbl([[['업 체 명',v.store]],[['확 인 자',v.manager]]])+
+    `<p style="margin-top:4mm">&nbsp; 본인은 ${esc(v.crimeTime.replace(/\s*\d{1,2}:\d{2}.*$/,''))} 당 매장에서 도난당한 상품${v.status==='held'?'':'으로서 경찰로부터 가환부받은 상품'} 중 아래 상품에 대하여, 경찰관이 제시한 압수 당시 사진과 상품코드를 당사 상품정보로 조회하여 다음과 같이 확인합니다.</p>
+    <table><tr><th>연번</th><th>경찰 기재 품명</th><th>당사 상품명</th><th>상품코드</th><th>판매가</th><th>수량</th></tr>
+    ${v.items.map(i=>`<tr><td class="c">${esc(i.no)}</td><td>${esc(i.before)}</td><td>${esc(i.after)}</td><td>${esc(i.code)}</td><td class="r">${esc(i.price)}</td><td class="c">${esc(i.qty)}</td></tr>`).join('')}</table>
+    <p>&nbsp; 위 상품은 도난 처리된 상품과 같으며, 피해품 전체 ${esc(v.total)}의 판매가 합계는 ${esc(v.damage==='same'?v.amount:(v.amountAfter||'○○,○○○원'))}입니다.</p>
+    <p class="c" style="margin-top:8mm">${esc(v.doneVictim?v.victimDate:'20  .   .   .')}</p>
+    <div class="sign">확 인 자 : ${esc(v.store)} ${esc(v.manager)} (서명)<br>확인 경찰관 : ${esc(v.station)} ${esc(v.officer)} (인)</div>
+    <div class="guide">출력되지 않는 안내: 전화로 확인했다면 이 서류 대신 '수사보고(전화 확인)'를 작성하세요.</div>`);
+}
+
+function docPhoto(v){
+  const held=v.status==='held'&&v.doneOpen;
+  const cells=v.items.map((i,k)=>{
+    const m='①②③④⑤⑥⑦⑧⑨⑩'[k]||(k+1);
+    return `<tr><td style="width:50%"><div class="photo">사진 부착</div><p class="c">${m}-1 연번 ${esc(i.no)} 압수 당시 포장 앞면<br>(기재 품명: ${esc(i.before)})</p></td>
+    <td><div class="photo">사진 부착</div><p class="c">${m}-2 연번 ${esc(i.no)} 포장 상품명·상품코드 표시 부분<br>→ ${esc(i.after)}</p></td></tr>`+
+    (held?`<tr><td colspan="2"><div class="photo" style="height:50mm">사진 부착</div><p class="c">${m}-3 연번 ${esc(i.no)} 개봉 후 내용물 (${esc(v.openTime)}, 참여인 ${esc(v.witness)})</p></td></tr>`:'');
+  }).join('');
+  return page('사 진 대 지','(압수물 품명 정정 확인)',
+    metaTbl([[['사건번호',v.caseNo],['작성일',v.writeDate]]])+`<table>${cells}</table>`+
+    `<div class="sign">작성자 사법경찰관 ${esc(v.officer)} (인)</div>
+    <div class="guide">출력되지 않는 안내: 압수 당시 사진에 상품코드가 보이지 않으면 피해업체에서 같은 상품코드 상품의 포장 사진을 받아 '동종 상품 참고사진'이라고 분명히 표시하세요. 실제 압수물 사진인 것처럼 쓰면 안 됩니다.</div>`);
+}
+
+function docSend(v){
+  const supp=v.reqType==='supp';
+  const atts=[['report','수사보고(압수물 품명 오기 확인 및 정정)'],['table','압수물 품명 정정 전·후 대조표'],['photo','사진대지'],['victim','피해품 확인서'],['reissue','압수목록 교부서(품명 정정) 사본'],['submitter','임의제출자 확인서']].filter(([k])=>v.docs[k]).map(([,t],i)=>`<p class="in2">${i+1}. ${t} 1부.</p>`).join('');
+  const amt=v.damage==='same'?`피해액(${esc(v.amount)})에는 변동이 없음`:`피해액은 ${esc(v.amountAfter||'○○,○○○원')}으로 정정함`;
+  const body=supp
+    ?`<p>수 신 : ${esc(v.proOffice)} ${esc(v.prosecutor)}</p><p>제 목 : 보완수사 결과 통보</p>
+      <p style="margin-top:4mm">1. 관련 : ${esc(v.proOffice)} ${esc(v.proCaseNo)}(${esc(v.requestDate)}자 보완수사요구)</p>
+      <p>2. 피의자 ${esc(v.suspect)}에 대한 ${esc(v.crime)} 사건과 관련하여 요구하신 보완수사를 이행하였기에 그 결과를 다음과 같이 통보합니다.</p>
+      <p class="in1">가. 요구사항 : 압수목록상 일부 압수물의 품명 불일치 확인 및 보완</p>
+      <p class="in1">나. 이행결과</p>
+      <p class="in2">(1) 압수물 ${esc(v.total)} 중 연번 ${esc(nos(v))}의 품명이 실제 물품과 다르게 기재된 사실을 확인함(미개봉 포장 외관에 따른 오기).</p>${lines(v,'in3')}
+      <p class="in2">(2) 압수 당시 사진, 포장 상품코드, ${v.status==='held'?'현품 개봉 확인':'피해업체 확인'}을 통해 동일한 물품임을 확인함. 압수 대상과 수량은 변동이 없으며, ${amt}.</p>
+      <p class="in2">(3) 송치된 원본 서류는 그대로 두고, ${v.doneReissue?`임의제출자에게 품명을 정정한 압수목록을 다시 교부함(${esc(v.reissueDate)}).`:'임의제출자에게 품명을 정정한 압수목록을 교부할 예정임.'}</p>`
+    :`<p>수 신 : ${esc(v.proOffice)} ${esc(v.prosecutor)}</p><p>제 목 : 압수물 품명 정정 관련 서류 추송</p>
+      <p style="margin-top:4mm">&nbsp; ${esc(v.sendDate)} 송치한 피의자 ${esc(v.suspect)}에 대한 ${esc(v.crime)} 사건(${esc(v.proCaseNo)})과 관련하여, 압수목록 연번 ${esc(nos(v))}의 품명 오기를 확인하고 정정한 서류를 다음과 같이 추가로 보냅니다.</p>${lines(v,'in1')}
+      <p>&nbsp; 압수 대상과 수량은 변동이 없으며, ${amt}. 이번 추송은 송치된 압수 관련 서류의 원본을 대체하지 않으며, 품명 오기의 경위와 정정 내용을 명확히 하기 위한 것입니다.</p>`;
+  return page(supp?esc(v.station.split('').join(' ')):'추 송 서','',
+    body+(atts?`<p style="margin-top:4mm"><b>붙 임</b></p>${atts}<p class="r">끝.</p>`:'')+
+    `<div class="sign" style="font-size:14pt">${esc(v.station)}장 (직인)</div>
+    <div class="guide">출력되지 않는 안내: KICS로 보완수사요구를 받았다면 KICS의 보완수사 결과 통보 서식에 위 내용을 옮겨 적으세요. 이 페이지는 내용 초안입니다.</div>`);
+}
+
+const RENDER={report:docReport,table:docTable,reissue:docReissue,submitter:docSubmitter,victim:docVictim,photo:docPhoto,send:docSend};
+function update(){
+  const v=read();
+  try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}
+  out.innerHTML=DOCS.filter(([k])=>v.docs[k]).map(([k])=>RENDER[k](v)).join('')||'<p class="hint">출력할 서류를 선택하세요.</p>';
+}
+
+let saved=null;try{saved=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+load(saved||DEFAULTS);
+form.addEventListener('input',update);form.addEventListener('change',update);
+document.getElementById('addItem').onclick=()=>{addRow();update()};
+document.getElementById('reset').onclick=()=>{load(DEFAULTS);update()};
+document.getElementById('btnPrint').onclick=()=>window.print();
+update();
+</script>
+</body>
+</html>
